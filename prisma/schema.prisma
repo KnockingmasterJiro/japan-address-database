@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 都道府県テーブル
+model Prefecture {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique // JIS X 0401 都道府県コード
+  name      String    // 都道府県名
+  region    String    // 地方区分
+  addresses Address[] // 関連する住所
+
+  @@index([code])
+  @@map("prefectures")
+}
+
+// 市区町村テーブル
+model City {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique // 市区町村コード
+  name        String    // 市区町村名
+  prefCode    String    // 都道府県コード
+  addresses   Address[] // 関連する住所
+
+  @@index([code])
+  @@index([prefCode])
+  @@map("cities")
+}
+
+// 住所テーブル
+model Address {
+  id          Int      @id @default(autoincrement())
+  prefCode    String   // 都道府県コード
+  prefecture  Prefecture @relation(fields: [prefCode], references: [code])
+  cityCode    String   // 市区町村コード
+  city        City     @relation(fields: [cityCode], references: [code])
+  townCode    String   // 町丁目コード
+  town        String   // 町丁目名
+  koaza       String?  // 小字名（ある場合）
+  lat         Float    // 緯度
+  lng         Float    // 経度
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([townCode])
+  @@index([prefCode])
+  @@index([cityCode])
+  @@index([townCode])
+  @@map("addresses")
+}
+
+// 地方区分テーブル
+model Region {
+  id    String @id // 地方区分ID (hokkaido, tohoku, etc.)
+  name  String // 地方区分名 (北海道, 東北, etc.)
+
+  @@map("regions")
+}
